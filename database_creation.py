@@ -1,21 +1,19 @@
 import sqlite3
 db = sqlite3.connect("AdoptionCenter.db")
 
-db.execute("create table if not exists Adopteurs(code_ad integer PRIMARY KEY, nom_ad text, prenom_ad text, numero texte, adresse text)")
-db.execute("create table if not exists Animaux(code_an integer PRIMARY KEY, nom_an text, race text, status text)")
+db.execute("create table if not exists Adopteurs(code_ad integer PRIMARY KEY, nom_ad text NOT NULL, prenom_ad text NOT NULL, numero texte NOT NULL, adresse text NOT NULL)")
+db.execute("create table if not exists Animaux(code_an integer PRIMARY KEY, nom_an text NOT NULL, race text NOT NULL, status text NOT NULL)")
 db.execute("""
 CREATE TABLE IF NOT EXISTS Adoptions(
     code_an INTEGER,
     code_ad INTEGER,
-    date TEXT,
+    date TEXT NOT NULL,
     FOREIGN KEY (code_an) REFERENCES Animaux(code_an),
     FOREIGN KEY (code_ad) REFERENCES Adopteurs(code_ad)
 )
 """)
-
 db.commit()
 
-#data des adopteurs deja inscrits
 adopteurs_data = [
     (1, "El Amrani", "Sofia", "0612345678", "Casablanca"),
     (2, "Benkirane", "Youssef", "0623456789", "Rabat"),
@@ -34,7 +32,7 @@ for adopter in adopteurs_data:
 
 db.commit()
 
-# data des animaux
+
 animaux_data = [
     (1, 'Bella', 'Chien', 'Non Adopté'),
     (2, 'Max', 'Chat', 'Non Adopté'),
@@ -51,15 +49,12 @@ animaux_data = [
     (13, 'Lala', 'Chat', 'Adopté'),
     (14, 'Sunny', 'Perroquet','Adopté'),
     (15, 'Oreo', 'Lapin', 'Adopté')
-
 ]
-
 for animal in animaux_data:
     db.execute("insert into Animaux(code_an, nom_an, race, status) VALUES (?, ?, ?, ?)", animal)
 
 db.commit()
 
-# data des adoptions deja executées
 adoption_data=[
     (3,1,"21 Juillet 2025"),
     (7,2,"23 Mai 2025"),
@@ -71,9 +66,7 @@ adoption_data=[
     (13,8,"10 Novembre 2025"),
     (14,9,"4 Juin 2025"),
     (15,10,"20 Octobre 2025")
-
 ]
-
 for adoption in adoption_data :
     db.execute("insert into Adoptions(code_an ,code_ad,date)VALUES(?,?,?)",adoption)
 
