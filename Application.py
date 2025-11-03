@@ -3,7 +3,7 @@ from tkinter import ttk, messagebox #un sous module de tkinter plus moderne et s
 from PIL import Image, ImageTk
 import sqlite3
 
-DB_PATH = "Code/AdoptionCenter.db"
+DB_PATH = r"C:\Users\malak\Documents\POO\POO Projet\AdoptionCenter.db"
 
 def connect_db():
     return sqlite3.connect(DB_PATH)
@@ -104,10 +104,10 @@ window.title("PetPal : Gestion du centre d'adoption")
 window.geometry("1000x650")
 window.resizable(True, True)
 
-icon= tk.PhotoImage(file="Images/icon.png")
+icon= tk.PhotoImage(file="icon.png")
 window.iconphoto(True, icon)
 
-bg_original = Image.open("Images/background_interface.jpg")
+bg_original = Image.open(r"C:\Users\malak\Documents\POO\POO Projet\background_interface.jpg")
 initial_w, initial_h = 1000, 650
 bg_resized = bg_original.resize((initial_w, initial_h), Image.LANCZOS)
 bg_photo = ImageTk.PhotoImage(bg_resized)
