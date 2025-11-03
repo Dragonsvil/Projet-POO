@@ -3,7 +3,7 @@ from tkinter import ttk, messagebox #un sous module de tkinter plus moderne et s
 from PIL import Image, ImageTk
 import sqlite3
 
-DB_PATH = r"C:\Users\malak\Documents\POO\POO Projet\AdoptionCenter.db"
+DB_PATH = "Code et Base de Données/AdoptionCenter.db"
 
 def connect_db():
     return sqlite3.connect(DB_PATH)
