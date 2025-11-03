@@ -1,8 +1,9 @@
 import tkinter as tk
-from tkinter import ttk, messagebox    #un sous module de tkinter plus moderne et stylé
+from tkinter import ttk, messagebox #un sous module de tkinter plus moderne et stylé
+from PIL import Image, ImageTk
 import sqlite3
 
-DB_PATH =r"C:\Users\malak\Documents\POO\POO Projet\AdoptionCenter.db"
+DB_PATH = r"C:\Users\malak\Documents\POO\POO Projet\AdoptionCenter.db"
 
 def connect_db():
     return sqlite3.connect(DB_PATH)
@@ -29,8 +30,7 @@ def show_data(table, tree):
         for c in cols:
             tree.heading(c, text=c)
             tree.column(c, width=110, anchor="center")
-
-        #vider le tableau 
+        # vider le tableau
         for r in tree.get_children():
             tree.delete(r)
         for row in rows:
@@ -40,20 +40,19 @@ def show_data(table, tree):
     finally:
         conn.close()
 
-# fonction d'incertion
+# fonction d'insertion
 def insert_data_dynamic(table, entries_values):
-    # entries_valeues = (col_nom, valeur)
+    # entries_values = (col_nom, valeur)
     try:
         cols = [c for c, v in entries_values]
         vals = [v for c, v in entries_values]
         placeholders = ", ".join(["?"] * len(vals))
         cols_str = ", ".join(cols)
-        query = f"INSERT INTO {table} ({cols_str}) VALUES ({placeholders})"    
+        query = f"INSERT INTO {table} ({cols_str}) VALUES ({placeholders})"
         conn = connect_db()
         cur = conn.cursor()
         cur.execute(query, vals)
         conn.commit()
-
         # mise à jour automatique du status de l'animal après adoption
         if table.lower() == "adoptions":
             try:
@@ -101,22 +100,90 @@ def update_row(table, pk_col, pk_value, updates):
 
 # interface graphique
 window = tk.Tk()
-window.title("🐾 PetPal - Gestion du centre d'adoption")
+window.title("PetPal : Gestion du centre d'adoption")
 window.geometry("1000x650")
+window.resizable(True, True)
+
+icon= tk.PhotoImage(file="icon.png")
+window.iconphoto(True, icon)
+
+bg_original = Image.open(r"C:\Users\malak\Documents\POO\POO Projet\background_interface.jpg")
+initial_w, initial_h = 1000, 650
+bg_resized = bg_original.resize((initial_w, initial_h), Image.LANCZOS)
+bg_photo = ImageTk.PhotoImage(bg_resized)
+
+bg_label = tk.Label(window, image=bg_photo)
+bg_label.image = bg_photo
+bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+
+_resize_after_id = None
+
+def resize_bg(event):
+    global _resize_after_id
+    if _resize_after_id is not None:
+        window.after_cancel(_resize_after_id)
+    _resize_after_id = window.after(120, lambda: _do_resize(event.width, event.height))
+
+def _do_resize(new_w, new_h):
+    global bg_photo, _resize_after_id
+    if new_w <= 0 or new_h <= 0:
+        return
+    resized = bg_original.resize((new_w, new_h), Image.LANCZOS)
+    bg_photo = ImageTk.PhotoImage(resized)
+    bg_label.config(image=bg_photo)
+    bg_label.image = bg_photo
+    _resize_after_id = None
+
+window.bind("<Configure>", resize_bg)
+
+main_color = "#0f2941"
+accent_blue = "#93cfe6"
+light_bg = "#bfe5f4"
+white = "#ffffff"
+
+title_font = ("Anton", 22, "bold")
+label_font = ("Poppins", 11)
+button_font = ("Poppins", 10, "bold")
 
 style = ttk.Style()
 style.theme_use("clam")
 
-top_frame = tk.Frame(window)
+style.configure("Rounded.TButton",
+    font=button_font,
+    background=accent_blue,
+    foreground=main_color,
+    padding=8,
+    borderwidth=0,
+    relief="flat"
+)
+style.map("Rounded.TButton",
+    background=[("active", "#aadcf2"), ("pressed", "#7cc3de")]
+)
+
+style.configure("Treeview",
+    background=white,
+    fieldbackground=white,
+    foreground=main_color,
+    font=("Poppins", 10),
+    rowheight=26
+)
+style.configure("Treeview.Heading",
+    background=accent_blue,
+    foreground=main_color,
+    font=("Poppins", 10, "bold")
+)
+style.map("Treeview", background=[("selected", "#d4eefb")])
+
+top_frame = tk.Frame(window, bg=light_bg)
 top_frame.pack(fill="x", padx=12, pady=8)
 
-tk.Label(top_frame, text="Table :", font=("Arial", 11)).pack(side="left")
+tk.Label(top_frame, text="Table :", bg=light_bg, fg=main_color, font=label_font).pack(side="left")
 table_var = tk.StringVar(value="Adopteurs")
 tables = ["Adopteurs", "Animaux", "Adoptions"]
-table_menu = ttk.Combobox(top_frame, textvariable=table_var, values=tables, state="readonly", width=18)
+table_menu = ttk.Combobox(top_frame, textvariable=table_var, values=tables, state="readonly", width=18, font=label_font)
 table_menu.pack(side="left", padx=8)
 
-btn_frame = tk.Frame(top_frame)
+btn_frame = tk.Frame(top_frame, bg=light_bg)
 btn_frame.pack(side="right")
 
 tree_frame = tk.Frame(window)
@@ -129,7 +196,7 @@ scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
 tree.configure(yscroll=scrollbar.set)
 scrollbar.pack(side="right", fill="y")
 
-# Actions des bouttons afficher(show) , inserer (insert) , supprimer(delete) ,  MAJ (update)) 
+# Actions des bouttons afficher(show) , inserer (insert) , supprimer(delete) ,  MAJ (update))
 def refresh():
     show_data(table_var.get(), tree)
 
@@ -140,25 +207,21 @@ def open_insert_window():
 
     win = tk.Toplevel(window)
     win.title(f"Insérer dans {table}")
+    win.config(bg="#e4f5fb")
     entries = []
     for i, col in enumerate(insert_cols):
-        tk.Label(win, text=col[1]).grid(row=i, column=0, padx=8, pady=6, sticky="e")
-        ent = tk.Entry(win, width=40)
+        tk.Label(win, text=col[1], bg="#e4f5fb", fg=main_color, font=label_font).grid(row=i, column=0, padx=8, pady=6, sticky="e")
+        ent = tk.Entry(win, width=40, font=label_font, fg=main_color)
         ent.grid(row=i, column=1, padx=8, pady=6, sticky="w")
         entries.append((col[1], ent))
 
     def on_insert():
-        pairs = []
-        for col_name, ent in entries:
-            val = ent.get().strip()
-            if val == "":
-                val = None
-            pairs.append((col_name, val))
+        pairs = [(col, ent.get().strip() or None) for col, ent in entries]
         insert_data_dynamic(table, pairs)
         win.destroy()
         refresh()
 
-    ttk.Button(win, text="Insérer", command=on_insert).grid(row=len(entries), column=0, columnspan=2, pady=10)
+    ttk.Button(win, text="Insérer", style="Rounded.TButton", command=on_insert).grid(row=len(entries), column=0, columnspan=2, pady=10)
 
 def delete_selected():
     table = table_var.get()
@@ -170,11 +233,9 @@ def delete_selected():
     info = get_table_columns(table)
     pk_col = info[0][1]
     pk_value = vals[0]
-    confirm = messagebox.askyesno("Confirmer", f"Supprimer {pk_col}={pk_value} ?")
-    if not confirm:
-        return
-    delete_row(table, pk_col, pk_value)
-    refresh()
+    if messagebox.askyesno("Confirmer", f"Supprimer {pk_col}={pk_value} ?"):
+        delete_row(table, pk_col, pk_value)
+        refresh()
 
 def open_update_window():
     table = table_var.get()
@@ -192,35 +253,31 @@ def open_update_window():
 
     win = tk.Toplevel(window)
     win.title(f"Mettre à jour {table} - {pk_col}={pk_value}")
+    win.config(bg="#e4f5fb")
     entries = []
     col_index = {c: i for i, c in enumerate(cols)}
 
     for i, col in enumerate(updatable):
         col_name = col[1]
-        tk.Label(win, text=col_name).grid(row=i, column=0, padx=8, pady=6, sticky="e")
-        ent = tk.Entry(win, width=40)
+        tk.Label(win, text=col_name, bg="#e4f5fb", fg=main_color, font=label_font).grid(row=i, column=0, padx=8, pady=6, sticky="e")
+        ent = tk.Entry(win, width=40, font=label_font, fg=main_color)
         current_val = vals[col_index[col_name]]
         ent.insert(0, "" if current_val is None else str(current_val))
         ent.grid(row=i, column=1, padx=8, pady=6, sticky="w")
         entries.append((col_name, ent))
 
     def on_update():
-        updates = []
-        for col_name, ent in entries:
-            val = ent.get().strip()
-            if val == "":
-                val = None
-            updates.append((col_name, val))
+        updates = [(col, ent.get().strip() or None) for col, ent in entries]
         update_row(table, pk_col, pk_value, updates)
         win.destroy()
         refresh()
 
-    ttk.Button(win, text="Mettre à jour", command=on_update).grid(row=len(entries), column=0, columnspan=2, pady=10)
+    ttk.Button(win, text="Mettre à jour",style="Rounded.TButton", command=on_update).grid(row=len(entries), column=0, columnspan=2, pady=10)
 
-ttk.Button(btn_frame, text="Afficher", command=refresh).pack(side="left", padx=6)
-ttk.Button(btn_frame, text="Insérer", command=open_insert_window).pack(side="left", padx=6)
-ttk.Button(btn_frame, text="Supprimer", command=delete_selected).pack(side="left", padx=6)
-ttk.Button(btn_frame, text="Mettre à jour", command=open_update_window).pack(side="left", padx=6)
+ttk.Button(btn_frame, text="Afficher",style="Rounded.TButton", command=refresh).pack(side="left", padx=6)
+ttk.Button(btn_frame, text="Insérer",style="Rounded.TButton", command=open_insert_window).pack(side="left", padx=6)
+ttk.Button(btn_frame, text="Supprimer",style="Rounded.TButton", command=delete_selected).pack(side="left", padx=6)
+ttk.Button(btn_frame, text="Mettre à jour",style="Rounded.TButton", command=open_update_window).pack(side="left", padx=6)
 
 refresh()
 
