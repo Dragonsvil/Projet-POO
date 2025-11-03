@@ -216,8 +216,22 @@ def open_insert_window():
         entries.append((col[1], ent))
 
     def on_insert():
-        pairs = [(col, ent.get().strip() or None) for col, ent in entries]
+        pairs = []
+        for col, ent in entries:
+            val = ent.get().strip()
+
+            # Vérification : pas de chiffres dans nom, prénom, etc.
+            if col.lower() in ["nom_an", "nom_ad", "prenom_ad", "race",'status']:
+                if any(char.isdigit() for char in val):
+                    messagebox.showerror("Erreur", f"Le champ '{col}' ne doit pas contenir de chiffres ❌")
+                    return
+
+            if val == "":
+                val = None
+            pairs.append((col, val))
+
         insert_data_dynamic(table, pairs)
+        
         win.destroy()
         refresh()
 
